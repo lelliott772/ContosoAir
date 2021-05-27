@@ -1,5 +1,6 @@
 # This project is retired, archived, and no longer supported. You are welcome to continue to use and fork the repository.
 
+[![Build Status](https://dev.azure.com/MultiCloudDevAzureTeam/PartsUnlimitedLaura/_apis/build/status/lelliott772.ContosoAir?branchName=master)](https://dev.azure.com/MultiCloudDevAzureTeam/PartsUnlimitedLaura/_build/latest?definitionId=10&branchName=master)
 
 # Microsoft.Github CI Demo
 
