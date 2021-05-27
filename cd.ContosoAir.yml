@@ -4,16 +4,52 @@
 # https://aka.ms/yaml
 
 trigger:
-- master
+- none
 
+resources:
+  pipelines:
+    - pipeline: buildContosoAir
+      source: lelliott772/ContosoAir
+      trigger:
+        branches:
+          include:
+            - master
 pool:
-  vmImage: ubuntu-latest
+  name: SelfHosted
 
 steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+- task: DownloadBuildArtifacts@0
+  inputs:
+    buildType: 'specific'
+    project: '789cb9db-584b-4abb-b061-634de2987b39'
+    pipeline: '10'
+    specificBuildWithTriggering: true
+    buildVersionToDownload: 'latest'
+    downloadType: 'single'
+    artifactName: 'drop'
+    downloadPath: '$(System.ArtifactsDirectory)'
+  
+- task: AzureResourceManagerTemplateDeployment@3
+  inputs:
+    deploymentScope: 'Resource Group'
+    azureResourceManagerConnection: 'sap-mc-azure-dev(3ad22ffb-6fbc-4efa-9bbc-c6755b428af8)'
+    subscriptionId: '3ad22ffb-6fbc-4efa-9bbc-c6755b428af8'
+    action: 'Create Or Update Resource Group'
+    resourceGroupName: '$(resourcegroup)'
+    location: 'West Europe'
+    templateLocation: 'Linked artifact'
+    csmFile: '$(System.ArtifactsDirectory)/drop/Templates/azuredeploy.json'
+    csmParametersFile: '$(System.ArtifactsDirectory)/drop/Templates/azuredeploy.parameters.json'
+    overrideParameters: |
+      -p_environment $(web_environment) 
+      -p_site_prefix $(web_prefix) 
+      -p_site_web_name $(web_site)
+    deploymentMode: 'Incremental'
 
-- script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+- task: AzureRmWebAppDeployment@4
+  inputs:
+    ConnectionType: 'AzureRM'
+    azureSubscription: 'sap-mc-azure-dev(3ad22ffb-6fbc-4efa-9bbc-c6755b428af8)'
+    appType: 'webApp'
+    WebAppName: '$(web_prefix)-$(web_site)-$(web_environment)'
+    packageForLinux: '$(System.ArtifactsDirectory)/**/*.zip'
